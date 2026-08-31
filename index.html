@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C Programming Platform - Minimalist Edition</title>
+    <title>C Programming Platform - Interactive Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -138,10 +138,7 @@
             const [isRunning, setIsRunning] = useState(false);
             const [xp, setXp] = useState(120);
 
-            // Tutorial state for Module 1
-            const [tutorialStep, setTutorialStep] = useState(0);
-
-            // Quiz state (Randomized per session/entry)
+            // Quiz state
             const [quizQuestions, setQuizQuestions] = useState([]);
             const [quizAnswers, setQuizAnswers] = useState({});
             const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -149,7 +146,6 @@
 
             const activeModule = MODULES[currentModuleIdx];
 
-            // Save state effects
             useEffect(() => {
                 localStorage.setItem('c_current_mod', currentModuleIdx);
             }, [currentModuleIdx]);
@@ -162,7 +158,6 @@
                 localStorage.setItem('c_user_codes', JSON.stringify(userCodes));
             }, [userCodes]);
 
-            // Initialize or reset quiz when switching to quiz module
             useEffect(() => {
                 if (activeModule.type === 'quiz') {
                     const shuffled = [...activeModule.questionsPool].sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -196,7 +191,7 @@
                         setCompletedModules(prev => ({ ...prev, [activeModule.id]: true }));
                         setXp(prev => prev + 50);
                     } else {
-                        setOutput(`[Compilation Error] Output mismatch or syntax requirement missing.\nExpected condition not met for module validation.`);
+                        setOutput(`[Compilation Error] Output mismatch or syntax requirement missing.`);
                     }
                 }, 600);
             };
@@ -215,7 +210,6 @@
             };
 
             const isQuizActive = activeModule.type === 'quiz';
-            const isQuizSubmittedState = isQuizActive && quizSubmitted;
 
             return (
                 <div className="flex h-screen w-screen overflow-hidden bg-darkBg text-neutral-200">
@@ -236,7 +230,6 @@
                             {MODULES.map((mod, idx) => {
                                 const isDone = completedModules[mod.id];
                                 const isCurrent = currentModuleIdx === idx;
-                                // If quiz is active and not submitted, block module switching
                                 const isLockedByQuiz = isQuizActive && !quizSubmitted && !isCurrent;
 
                                 return (
@@ -263,22 +256,14 @@
                                 );
                             })}
                         </div>
-
-                        <div className="p-4 border-t border-borderCol text-xs text-neutral-500 flex justify-between items-center">
-                            <span>System v1.4.0</span>
-                            <span className="text-neutral-400">Minimalist Engine</span>
-                        </div>
                     </aside>
 
                     {/* MAIN CONTENT AREA */}
                     <main className="flex-1 flex flex-col h-full overflow-hidden bg-darkBg">
                         {!isQuizActive ? (
                             <>
-                                {/* TOP NAVIGATION BAR FOR LESSON vs WORKSPACE */}
                                 <header className="h-14 border-b border-borderCol px-6 flex items-center justify-between bg-cardBg/50 backdrop-blur">
-                                    <div className="flex items-center gap-4">
-                                        <h1 className="text-sm font-medium text-white">{activeModule.title}</h1>
-                                    </div>
+                                    <h1 className="text-sm font-medium text-white">{activeModule.title}</h1>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => setViewMode('lesson')}
@@ -303,7 +288,6 @@
                                     </div>
                                 </header>
 
-                                {/* DYNAMIC CONTENT VIEW */}
                                 <div className="flex-1 overflow-y-auto p-8">
                                     {viewMode === 'lesson' ? (
                                         <div className="max-w-3xl mx-auto space-y-6">
@@ -340,7 +324,6 @@
                                                 </button>
                                             </div>
 
-                                            {/* CODE EDITOR & CONSOLE SPLIT */}
                                             <div className="flex-1 grid grid-rows-2 gap-4 h-[calc(100%-40px)]">
                                                 <div className="border border-borderCol rounded-lg overflow-hidden bg-cardBg flex flex-col">
                                                     <div className="bg-neutral-900 px-4 py-2 border-b border-borderCol text-xs text-neutral-400 flex justify-between items-center">
@@ -369,7 +352,6 @@
                                 </div>
                             </>
                         ) : (
-                            /* QUIZ MODULE VIEW */
                             <div className="flex-1 flex flex-col h-full overflow-y-auto p-8 max-w-3xl mx-auto w-full">
                                 <div className="border-b border-borderCol pb-4 mb-6">
                                     <h1 className="text-lg font-bold text-white">{activeModule.title}</h1>
