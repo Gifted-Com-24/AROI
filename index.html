@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C Programming Minimalist Academy</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX compilation in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #f4f4f5; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    </style>
+</head>
+<body class="bg-black text-zinc-100 antialiased selection:bg-zinc-800 selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Question Bank for Randomized Quizzes
+        const QUESTION_POOL = [
+            {
+                id: 1,
+                question: "What is the correct file extension for a C source code file?",
+                options: [".cb", ".cc", ".c", ".cpp"],
+                answer: 2,
+                explanation: "C source files use the '.c' extension by convention, while C++ uses '.cpp'."
+            },
+            {
+                id: 2,
+                question: "Which function is required as the starting point of every C program?",
+                options: ["start()", "main()", "begin()", "init()"],
+                answer: 1,
+                explanation: "Execution of a C program begins with the 'main()' function."
+            },
+            {
+                id: 3,
+                question: "Which library must be included to use the printf() function?",
+                options: ["<stdlib.h>", "<conio.h>", "<stdio.h>", "<string.h>"],
+                answer: 2,
+                explanation: "Standard Input Output header '<stdio.h>' contains declarations for printf and scanf."
+            },
+            {
+                id: 4,
+                question: "Which format specifier is used to print an integer value in printf?",
+                options: ["%f", "%c", "%s", "%d"],
+                answer: 3,
+                explanation: "'%d' is used for signed decimal integers, while '%f' is for floating-point numbers."
+            },
+            {
+                id: 5,
+                question: "What keyword is used to define a constant value in C?",
+                options: ["constant", "const", "define", "static"],
+                answer: 1,
+                explanation: "The 'const' keyword specifies that a variable's value cannot be modified after initialization."
+            },
+            {
+                id: 6,
+                question: "Which operator is used to access the memory address of a variable?",
+                options: ["*", "&", "->", "."],
+                answer: 1,
+                explanation: "The address-of operator '&' returns the memory memory address of its operand."
+            }
+        ];
+
+        const MODULES = [
+            {
+                id: 1,
+                title: "Module 01: Hello World",
+                type: "lesson",
+                guideTitle: "Introduction to C & Basic Syntax",
+                guideContent: `C is a powerful general-purpose programming language. Every C program consists of functions and variables.
+- **#include <stdio.h>**: Tells the compiler to include the Standard Input/Output library before compiling.
+- **main()**: The mandatory entry point where program execution starts.
+- **printf()**: A function used to print formatted output to the screen.`,
+                codeSnippet: `#include <stdio.h>\n\nint main() {\n    printf("Hello World");\n    return 0;\n}`,
+                validationRegex: /printf\s*\(\s*["']Hello World["']\s*\)\s*;/
+            },
+            {
+                id: 2,
+                title: "Module 02: Variables",
+                type: "lesson",
+                guideTitle: "Variables and Data Types",
+                guideContent: `Variables store data values in computer memory.
+- **int**: Stores whole numbers (e.g., 10, -5). Format specifier: \`%d\`
+- **float**: Stores fractional numbers (e.g., 3.14). Format specifier: \`%f\`
+- **char**: Stores a single character. Format specifier: \`%c\``,
+                codeSnippet: `#include <stdio.h>\n\nint main() {\n    int age = 20;\n    printf("Age: %d", age);\n    return 0;\n}`,
+                validationRegex: /int\s+\w+\s*=\s*\d+;\s*printf\s*\(/
+            },
+            {
+                id: 3,
+                title: "Module 03: Control Flow",
+                type: "lesson",
+                guideTitle: "Conditional Branching (if-else)",
+                guideContent: `Decision making structures require that the programmer specify one or more conditions to be evaluated.
+- **if (condition)**: Executes code block if condition is true.
+- **else**: Executes when the preceding condition evaluates to false.`,
+                codeSnippet: `#include <stdio.h>\n\nint main() {\n    int score = 75;\n    if (score >= 50) {\n        printf("Passed");\n    } else {\n        printf("Failed");\n    }\n    return 0;\n}`,
+                validationRegex: /if\s*\(.*\)\s*\{[^}]+\}/
+            },
+            {
+                id: 4,
+                title: "Module 04: Quiz",
+                type: "quiz"
+            }
+        ];
+
+        function App() {
+            const [currentModuleIndex, setCurrentModuleIndex] = useState(() => {
+                const saved = localStorage.getItem('c_curr_mod');
+                return saved !== null ? parseInt(saved) : 0;
+            });
+            
+            const [viewMode, setViewMode] = useState(() => {
+                const saved = localStorage.getItem('c_view_mode');
+                return saved || 'lesson'; // 'lesson' or 'workspace'
+            });
+
+            const [completedModules, setCompletedModules] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('c_completed');
+                    return saved ? JSON.parse(saved) : [];
+                } catch { return []; }
+            });
+
+            const [userCodes, setUserCodes] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('c_codes');
+                    return saved ? JSON.parse(saved) : { 0: MODULES[0].codeSnippet, 1: MODULES[1].codeSnippet, 2: MODULES[2].codeSnippet };
+                } catch {
+                    return { 0: MODULES[0].codeSnippet, 1: MODULES[1].codeSnippet, 2: MODULES[2].codeSnippet };
+                }
+            });
+
+            const [output, setOutput] = useState('// Click "Run Code" to compile and test your program.');
+            const [isRunning, setIsRunning] = useState(false);
+
+            // Tutorial state
+            const [isTutorialActive, setIsTutorialActive] = useState(() => {
+                return !localStorage.getItem('c_tutorial_done');
+            });
+            const [tutorialStep, setTutorialStep] = useState(0);
+
+            // Quiz state
+            const [quizQuestions, setQuizQuestions] = useState([]);
+            const [quizAnswers, setQuizAnswers] = useState({});
+            const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
+            const [quizScore, setQuizScore] = useState(0);
+
+            const editorRef = useRef(null);
+
+            // Save state effects
+            useEffect(() => {
+                localStorage.setItem('c_curr_mod', currentModuleIndex);
+            }, [currentModuleIndex]);
+
+            useEffect(() => {
+                localStorage.setItem('c_view_mode', viewMode);
+            }, [viewMode]);
+
+            useEffect(() => {
+                localStorage.setItem('c_completed', JSON.stringify(completedModules));
+            }, [completedModules]);
+
+            useEffect(() => {
+                localStorage.setItem('c_codes', JSON.stringify(userCodes));
+            }, [userCodes]);
+
+            // Initialize Quiz questions randomly when module 4 is active
+            useEffect(() => {
+                if (MODULES[currentModuleIndex].type === 'quiz') {
+                    const shuffled = [...QUESTION_POOL].sort(() => 0.5 - Math.random()).slice(0, 4);
+                    setQuizQuestions(shuffled);
+                    setQuizAnswers({});
+                    setIsQuizSubmitted(false);
+                    setQuizScore(0);
+                }
+            }, [currentModuleIndex]);
+
+            const currentModule = MODULES[currentModuleIndex];
+
+            const handleCodeChange = (e) => {
+                const val = e.target.value;
+                setUserCodes(prev => ({ ...prev, [currentModuleIndex]: val }));
+            };
+
+            const runCode = () => {
+                setIsRunning(true);
+                setOutput('Compiling code via sandboxed environment...');
+                setTimeout(() => {
+                    setIsRunning(false);
+                    const code = userCodes[currentModuleIndex] || '';
+                    const isValid = currentModule.validationRegex.test(code);
+                    
+                    if (isValid) {
+                        setOutput(`Compilation Successful!\n-------------------------\nProgram Output:\nHello World\n\nProcess exited with status 0.`);
+                        if (!completedModules.includes(currentModuleIndex)) {
+                            setCompletedModules(prev => [...prev, currentModuleIndex]);
+                        }
+                        if (isTutorialActive && tutorialStep === 1) {
+                            setTutorialStep(2);
+                        }
+                    } else {
+                        setOutput(`Compilation Error:\n-------------------------\nError: Expected structure not matched.\nCheck your syntax and try again.`);
+                    }
+                }, 600);
+            };
+
+            const handleGhostType = () => {
+                const targetText = currentModule.codeSnippet;
+                let i = 0;
+                setUserCodes(prev => ({ ...prev, [currentModuleIndex]: '' }));
+                const interval = setInterval(() => {
+                    if (i <= targetText.length) {
+                        setUserCodes(prev => ({ ...prev, [currentModuleIndex]: targetText.substring(0, i) }));
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                        setTutorialStep(1);
+                    }
+                }, 30);
+            };
+
+            const finishTutorial = () => {
+                setIsTutorialActive(false);
+                localStorage.setItem('c_tutorial_done', 'true');
+            };
+
+            const submitQuiz = () => {
+                let score = 0;
+                quizQuestions.forEach((q) => {
+                    if (quizAnswers[q.id] === q.answer) score++;
+                });
+                setQuizScore(score);
+                setIsQuizSubmitted(true);
+                if (score >= Math.ceil(quizQuestions.length / 2)) {
+                    if (!completedModules.includes(currentModuleIndex)) {
+                        setCompletedModules(prev => [...prev, currentModuleIndex]);
+                    }
+                }
+            };
+
+            const switchModule = (idx) => {
+                // Constraint: Cannot switch modules if quiz is active and unsubmitted (or in quiz mode generally when quiz started)
+                if (MODULES[currentModuleIndex].type === 'quiz' && !isQuizSubmitted) {
+                    return;
+                }
+                setCurrentModuleIndex(idx);
+                setViewMode('lesson');
+            };
+
+            return (
+                <div className="flex h-screen w-screen overflow-hidden bg-black text-zinc-100 font-sans">
+                    
+                    {/* SIDEBAR */}
+                    <div className="w-80 border-r border-zinc-800 flex flex-col bg-zinc-950 shrink-0">
+                        <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
+                            <span className="font-mono text-xs uppercase tracking-widest text-zinc-400">C Academy</span>
+                            <span className="text-xs bg-zinc-900 border border-zinc-800 px-2 py-1 rounded text-zinc-400">v1.0</span>
+                        </div>
+
+                        <div className="p-4 flex-1 overflow-y-auto space-y-2">
+                            <div className="text-[10px] font-mono tracking-wider uppercase text-zinc-500 mb-2 px-2">Curriculum</div>
+                            {MODULES.map((mod, idx) => {
+                                const isLocked = MODULES[currentModuleIndex].type === 'quiz' && !isQuizSubmitted && currentModuleIndex !== idx;
+                                const isCompleted = completedModules.includes(idx);
+                                const isCurrent = currentModuleIndex === idx;
+
+                                return (
+                                    <button
+                                        key={mod.id}
+                                        onClick={() => switchModule(idx)}
+                                        disabled={isLocked}
+                                        className={`w-full text-left px-3 py-2.5 rounded text-xs flex items-center justify-between transition-colors ${
+                                            isCurrent ? 'bg-zinc-900 text-white border border-zinc-800' : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
+                                        } ${isLocked ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                    >
+                                        <span className="truncate pr-2">{mod.title}</span>
+                                        {isCompleted && <span className="text-zinc-200 font-mono text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded">DONE</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="p-4 border-t border-zinc-800 text-[11px] text-zinc-500 flex justify-between items-center">
+                            <span>Progress: {Math.round((completedModules.length / MODULES.length) * 100)}%</span>
+                            <span className="font-mono">C99 Standard</span>
+                        </div>
+                    </div>
+
+                    {/* MAIN CONTENT AREA */}
+                    <div className="flex-1 flex flex-col h-full overflow-hidden bg-black">
+                        
+                        {/* TOP NAVIGATION / HEADER */}
+                        <div className="h-14 border-b border-zinc-800 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
+                            <div className="flex items-center space-x-4">
+                                <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest">{currentModule.title}</span>
+                            </div>
+
+                            {currentModule.type === 'lesson' && (
+                                <div className="flex items-center space-x-2 bg-zinc-900 p-1 rounded border border-zinc-800">
+                                    <button
+                                        onClick={() => setViewMode('lesson')}
+                                        className={`px-3 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'lesson' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
+                                    >
+                                        Lesson Guide
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('workspace')}
+                                        className={`px-3 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'workspace' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
+                                    >
+                                        Code Workspace
+                                    </button>
+                                </div>
+                            )}
+
+                            {currentModule.type === 'quiz' && (
+                                <span className="text-xs text-zinc-400 font-mono bg-zinc-900 px-3 py-1 rounded border border-zinc-800">
+                                    Assessment Mode (Locked Navigation)
+                                </span>
+                            )}
+                        </div>
+
+                        {/* DYNAMIC VIEW CONTAINER */}
+                        <div className="flex-1 overflow-y-auto p-8">
+                            
+                            {/* LESSON GUIDE VIEW */}
+                            {currentModule.type === 'lesson' && viewMode === 'lesson' && (
+                                <div className="max-w-3xl mx-auto space-y-6">
+                                    <div>
+                                        <h1 className="text-2xl font-semibold tracking-tight text-white mb-2">{currentModule.guideTitle}</h1>
+                                        <div className="h-0.5 w-12 bg-zinc-700"></div>
+                                    </div>
+                                    <div className="text-sm text-zinc-300 leading-relaxed space-y-4 whitespace-pre-line bg-zinc-950 p-6 rounded-lg border border-zinc-800/80">
+                                        {currentModule.guideContent}
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button
+                                            onClick={() => setViewMode('workspace')}
+                                            className="bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded text-xs font-medium transition-colors"
+                                        >
+                                            Open Code Workspace &rarr;
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CODE WORKSPACE VIEW */}
+                            {currentModule.type === 'lesson' && viewMode === 'workspace' && (
+                                <div className="h-full flex flex-col space-y-4 max-w-5xl mx-auto w-full pb-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs text-zinc-400 font-mono">Editor & Execution Engine</span>
+                                        <button
+                                            onClick={runCode}
+                                            disabled={isRunning}
+                                            className="bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded text-xs font-medium transition-colors disabled:opacity-50"
+                                        >
+                                            {isRunning ? 'Compiling...' : 'Run Code'}
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-[350px]">
+                                        <div className="flex flex-col border border-zinc-800 rounded bg-zinc-950 overflow-hidden">
+                                            <div className="bg-zinc-900 px-4 py-2 border-b border-zinc-800 text-[11px] font-mono text-zinc-400">main.c</div>
+                                            <textarea
+                                                value={userCodes[currentModuleIndex] || ''}
+                                                onChange={handleCodeChange}
+                                                spellCheck="false"
+                                                className="flex-1 bg-transparent p-4 font-mono text-xs text-zinc-200 resize-none focus:outline-none leading-relaxed"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col border border-zinc-800 rounded bg-black overflow-hidden">
+                                            <div className="bg-zinc-900 px-4 py-2 border-b border-zinc-800 text-[11px] font-mono text-zinc-400">Terminal Output</div>
+                                            <pre className="flex-1 p-4 font-mono text-xs text-zinc-400 whitespace-pre-wrap overflow-y-auto">
+                                                {output}
+                                            </pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* QUIZ VIEW */}
+                            {currentModule.type === 'quiz' && (
+                                <div className="max-w-2xl mx-auto space-y-6 pb-12">
+                                    <div>
+                                        <h1 className="text-xl font-semibold tracking-tight text-white mb-1">Module 04 Assessment</h1>
+                                        <p className="text-xs text-zinc-500">Answer all questions below. Navigation is locked until assessment submission.</p>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        {quizQuestions.map((q, idx) => (
+                                            <div key={q.id} className="bg-zinc-950 border border-zinc-800 p-5 rounded-lg space-y-3">
+                                                <p className="text-xs font-mono text-zinc-400">Question {idx + 1}</p>
+                                                <p className="text-sm font-medium text-zinc-200">{q.question}</p>
+                                                <div className="space-y-2 pt-2">
+                                                    {q.options.map((opt, optIdx) => {
+                                                        const isSelected = quizAnswers[q.id] === optIdx;
+                                                        return (
+                                                            <button
+                                                                key={optIdx}
+                                                                disabled={isQuizSubmitted}
+                                                                onClick={() => setQuizAnswers(prev => ({ ...prev, [q.id]: optIdx }))}
+                                                                className={`w-full text-left px-3 py-2 rounded text-xs transition-colors border ${
+                                                                    isSelected ? 'bg-zinc-900 border-white text-white' : 'bg-black border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                                                                }`}
+                                                            >
+                                                                {opt}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                {isQuizSubmitted && (
+                                                    <div className={`mt-3 p-3 rounded text-xs font-mono ${quizAnswers[q.id] === q.answer ? 'bg-emerald-950/40 border border-emerald-900 text-emerald-400' : 'bg-rose-950/40 border border-rose-900 text-rose-400'}`}>
+                                                        {quizAnswers[q.id] === q.answer ? '✓ Correct' : `✗ Incorrect. Correct answer: ${q.options[q.answer]}`}
+                                                        <p className="mt-1 text-zinc-400 font-sans">{q.explanation}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {!isQuizSubmitted ? (
+                                        <div className="flex justify-end pt-4">
+                                            <button
+                                                onClick={submitQuiz}
+                                                disabled={Object.keys(quizAnswers).length < quizQuestions.length}
+                                                className="bg-white text-black hover:bg-zinc-200 px-6 py-2 rounded text-xs font-medium transition-colors disabled:opacity-30"
+                                            >
+                                                Submit Assessment
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-lg text-center space-y-3">
+                                            <p className="text-sm font-mono text-zinc-300">Assessment Result: {quizScore} / {quizQuestions.length}</p>
+                                            <p className="text-xs text-zinc-500">
+                                                {quizScore >= Math.ceil(quizQuestions.length / 2) ? 'Passed! Module completed successfully.' : 'Did not pass threshold. Refresh module to retry.'}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+
+                    {/* TUTORIAL OVERLAY MODAL (Ghost Typing Intro) */}
+                    {isTutorialActive && currentModuleIndex === 0 && viewMode === 'workspace' && (
+                        <div className="fixed bottom-8 right-8 z-50 bg-zinc-900 border border-zinc-700 p-4 rounded-lg shadow-2xl max-w-sm space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">Interactive Guide</span>
+                                <button onClick={finishTutorial} className="text-zinc-500 hover:text-white text-xs">Skip</button>
+                            </div>
+                            <p className="text-xs text-zinc-300 leading-relaxed">
+                                {tutorialStep === 0 && "Welcome! Click below to let the automated mentor type the basic C structure into your editor."}
+                                {tutorialStep === 1 && "Great! Now click 'Run Code' to compile and test your first C program."}
+                                {tutorialStep === 2 && "Awesome! Module 1 is now complete. You can proceed to explore other modules."}
+                            </p>
+                            {tutorialStep === 0 && (
+                                <button
+                                    onClick={handleGhostType}
+                                    className="w-full bg-white text-black hover:bg-zinc-200 py-2 rounded text-xs font-medium transition-colors"
+                                >
+                                    Auto-Type Code Structure
+                                </button>
+                            )}
+                            {tutorialStep === 2 && (
+                                <button
+                                    onClick={finishTutorial}
+                                    className="w-full bg-white text-black hover:bg-zinc-200 py-2 rounded text-xs font-medium transition-colors"
+                                >
+                                    Finish Tutorial
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
