@@ -29,6 +29,8 @@
         ::-webkit-scrollbar-track { background: #0F172A; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        /* Markdown Content Styling */
         .markdown-content h2 { font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem; }
         .markdown-content p { color: #cbd5e1; line-height: 1.7; margin-bottom: 1rem; font-size: 0.95rem; }
         .markdown-content code { font-family: 'Fira Code', monospace; background: #1e293b; color: #38bdf8; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.85em; }
@@ -136,6 +138,8 @@
 
     <script>
         // --- COURSE DATABASE ---
+        // ประกอบด้วยเนื้อหาแบบ บทเรียน (Lesson) มีทั้งข้อสอบตัวเลือก (mcq) และ เติมคำ (written)
+        // และแบบ ข้อสอบท้ายบท (Exam)
         const courseData = [
             {
                 type: 'lesson',
@@ -249,6 +253,7 @@
             loadContent(0);
         }
 
+        // --- SIDEBAR NAVIGATION LOGIC ---
         function renderNav() {
             navContainer.innerHTML = '';
             courseData.forEach((item, index) => {
@@ -271,7 +276,7 @@
                 }
 
                 btn.className = baseStyle;
-                // Add id for targetting animation
+                // Add id for targetting animation (Auto-Unlock pulse)
                 btn.id = `nav-btn-${index}`;
                 
                 // Status Icons
@@ -301,6 +306,7 @@
             });
         }
 
+        // --- ROUTER & CONTENT LOADER ---
         function loadContent(index) {
             currentLessonIndex = index;
             const data = courseData[index];
@@ -315,7 +321,7 @@
                 document.getElementById('lesson-title').innerText = data.title;
                 document.getElementById('lesson-content').innerHTML = data.content;
                 
-                // Embed OneCompiler
+                // Embed Real C Compiler using OneCompiler Iframe
                 document.getElementById('compiler-iframe').src = `https://onecompiler.com/embed/c?theme=dark&hideLanguageSelection=true&code=${encodeURIComponent(data.code)}`;
                 
                 unlockLesson(); // Reset Blur overlay
