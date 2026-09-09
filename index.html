@@ -18,19 +18,33 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         code: ['Fira Code', 'monospace']
+                    },
+                    animation: {
+                        'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
+                        'modal-pop': 'modal-pop 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        },
+                        'modal-pop': {
+                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0F172A; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
-        /* Markdown Content Styling */
         .markdown-content h2 { font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem; }
         .markdown-content p { color: #cbd5e1; line-height: 1.7; margin-bottom: 1rem; font-size: 0.95rem; }
         .markdown-content code { font-family: 'Fira Code', monospace; background: #1e293b; color: #38bdf8; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.85em; }
@@ -38,108 +52,144 @@
         .markdown-content li { margin-bottom: 0.5rem; }
     </style>
 </head>
-<body class="bg-darker text-slate-50 h-screen flex flex-col md:flex-row overflow-hidden antialiased">
+<body class="bg-darker text-slate-50 h-screen flex flex-col overflow-hidden antialiased">
 
-    <!-- Sidebar Navigation -->
-    <aside id="sidebar" class="w-full md:w-64 bg-dark border-r border-slate-800 flex flex-col h-auto md:h-screen shrink-0 z-20 shadow-xl transition-all duration-300 md:flex">
-        <div class="p-4 border-b border-slate-800">
-            <h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center gap-2">
-                <svg class="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                C-Mastery
-            </h1>
-        </div>
-        <div class="flex-1 overflow-y-auto p-4" id="sidebar-nav">
-            <!-- Dynamic Navigation Buttons injected via JS -->
-        </div>
-    </aside>
+    <!-- Mobile Header -->
+    <header class="md:hidden flex items-center justify-between p-4 bg-dark border-b border-slate-800 z-30">
+        <h1 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center gap-2">
+            <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            C-Mastery
+        </h1>
+        <button onclick="toggleMobileMenu()" class="p-2 text-slate-400 hover:text-white">
+            <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+    </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 relative overflow-hidden h-full">
-        
-        <!-- View 1: Split Lesson & Practice View -->
-        <div id="lesson-view" class="flex flex-col lg:flex-row h-full w-full absolute inset-0 transition-opacity duration-300">
+    <div class="flex flex-1 overflow-hidden relative">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="absolute md:relative w-64 bg-dark border-r border-slate-800 flex flex-col h-full shrink-0 z-40 shadow-xl transition-transform duration-300 -translate-x-full md:translate-x-0">
+            <div class="hidden md:flex p-4 border-b border-slate-800 items-center justify-between">
+                <h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    C-Mastery
+                </h1>
+            </div>
             
-            <!-- Left Panel: Lesson Content -->
-            <section class="flex-1 overflow-y-auto p-6 lg:p-10 border-b lg:border-b-0 lg:border-r border-slate-800 relative">
-                <header class="mb-8">
-                    <span id="lesson-chapter" class="text-cyan-400 text-sm font-bold tracking-wider uppercase">Chapter 1.1</span>
-                    <h1 id="lesson-title" class="text-3xl font-bold mt-2 text-white">โครงสร้างแรกของภาษา C</h1>
-                </header>
-                <div id="lesson-content" class="markdown-content pb-10 transition-all duration-300">
-                    <!-- Dynamic Content -->
+            <div class="p-4 border-b border-slate-800 bg-slate-900/50">
+                <div class="flex justify-between text-xs font-bold text-slate-400 mb-2">
+                    <span>ความคืบหน้า</span>
+                    <span id="progress-text">0%</span>
                 </div>
-
-                <!-- Lock Overlay for Quiz -->
-                <div id="lesson-lock-overlay" class="hidden absolute inset-0 bg-[#0F172A]/90 backdrop-blur-md z-10 flex-col items-center justify-center opacity-0 transition-opacity duration-300">
-                    <span class="text-5xl mb-4">🔒</span>
-                    <p class="text-xl font-bold text-white mb-2">โหมดทำแบบทดสอบ</p>
-                    <p class="text-sm text-slate-300 mb-6 text-center px-4">เนื้อหาถูกซ่อนไว้เพื่อทดสอบความเข้าใจ<br>ตอบให้ถูกเพื่อปลดล็อกบทเรียนถัดไป!</p>
-                    <button onclick="unlockLesson()" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-sm font-semibold transition-colors border border-slate-700">
-                        ยกเลิกและกลับไปอ่านเนื้อหา
-                    </button>
-                </div>
-            </section>
-
-            <!-- Right Panel: Code & Quiz -->
-            <section class="flex-1 flex flex-col h-full bg-darker w-full lg:w-1/2">
-                <!-- Real C Compiler (Embedded) -->
-                <div class="flex-1 p-0 flex flex-col h-1/2 min-h-[300px] border-b border-slate-800 bg-black">
-                    <iframe id="compiler-iframe" src="" class="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-                </div>
-
-                <!-- Interactive Quiz Section -->
-                <div class="h-auto max-h-[50vh] overflow-y-auto border-t border-slate-800 bg-[#0F172A] p-6 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] z-10 shrink-0">
-                    <div class="flex items-center gap-2 mb-4">
-                        <svg class="h-5 w-5 text-cyan-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
-                        <h3 class="text-lg font-bold" id="quiz-title-type">Knowledge Check</h3>
-                    </div>
-                    
-                    <p id="quiz-question" class="text-slate-200 mb-4 font-medium"></p>
-                    
-                    <!-- Pre-Quiz State -->
-                    <div id="quiz-start-container" class="mb-4 text-center">
-                        <button onclick="startMiniQuiz()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-                            📝 เริ่มทำแบบทดสอบ (ปิดเนื้อหา)
-                        </button>
-                    </div>
-
-                    <!-- Dynamic Answer Area (MCQ or Written) -->
-                    <div id="quiz-active-container" class="hidden">
-                        <div id="quiz-answer-area" class="mb-4"></div>
-                        <div id="quiz-feedback" class="hidden rounded-lg p-3 text-sm font-medium transition-all duration-300 mt-4"></div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- View 2: Full-Screen Exam View -->
-        <div id="exam-view" class="hidden flex-col h-full w-full absolute inset-0 bg-dark overflow-y-auto transition-opacity duration-300 z-30">
-            <div class="max-w-4xl mx-auto w-full p-6 lg:p-12 mt-12 lg:mt-0">
-                <header class="text-center mb-12 border-b border-slate-800 pb-8">
-                    <span class="inline-block py-1 px-3 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-widest mb-4">Chapter Assessment</span>
-                    <h1 id="exam-title" class="text-4xl font-bold text-white mb-4">Exam Title</h1>
-                    <p class="text-slate-400">ต้องทำคะแนนให้ได้ 80% ขึ้นไปเพื่อปลดล็อกบทเรียนถัดไป</p>
-                </header>
-
-                <div id="exam-questions" class="space-y-8 mb-12">
-                    <!-- Dynamic Exam Questions -->
-                </div>
-
-                <div class="text-center pb-20">
-                    <button id="exam-submit-btn" onclick="submitExam()" class="px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold rounded-xl text-lg shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all transform hover:scale-105">
-                        ส่งคำตอบข้อสอบ
-                    </button>
-                    <div id="exam-result-text" class="hidden mt-6 text-xl font-bold"></div>
+                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                    <div id="progress-bar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full transition-all duration-500 w-0"></div>
                 </div>
             </div>
-        </div>
 
-    </main>
+            <div class="flex-1 overflow-y-auto p-4" id="sidebar-nav">
+                <!-- Navigation inserted by JS -->
+            </div>
+        </aside>
+
+        <!-- Overlay for mobile sidebar -->
+        <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/50 z-30 hidden opacity-0 transition-opacity duration-300"></div>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 relative overflow-hidden h-full">
+            
+            <!-- View 1: Split Lesson & Practice View -->
+            <div id="lesson-view" class="flex flex-col lg:flex-row h-full w-full absolute inset-0 transition-all duration-300">
+                
+                <!-- Left Panel: Lesson Content -->
+                <section id="lesson-content-container" class="flex-1 overflow-y-auto p-6 lg:p-10 border-b lg:border-b-0 lg:border-r border-slate-800 relative bg-darker transition-all duration-300">
+                    <header class="mb-8">
+                        <span id="lesson-chapter" class="text-cyan-400 text-sm font-bold tracking-wider uppercase"></span>
+                        <h1 id="lesson-title" class="text-3xl font-bold mt-2 text-white"></h1>
+                    </header>
+                    <div id="lesson-content" class="markdown-content pb-10"></div>
+                </section>
+
+                <!-- Right Panel: Code & Quiz Trigger -->
+                <section class="flex-1 flex flex-col h-full bg-dark w-full lg:w-1/2">
+                    <div id="compiler-container" class="flex-1 p-0 flex flex-col min-h-[40vh] bg-black transition-all duration-300">
+                        <iframe id="compiler-iframe" src="" class="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+                    </div>
+
+                    <div class="h-auto bg-[#0B1120] p-6 lg:p-8 z-10 shrink-0 border-t border-slate-800 shadow-[0_-10px_30px_rgba(0,0,0,0.4)]">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-cyan-500/20 rounded-lg">
+                                <svg class="h-6 w-6 text-cyan-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white leading-tight">พร้อมปลดล็อกบทถัดไปหรือยัง?</h3>
+                                <p class="text-xs text-slate-400 mt-1">ทดสอบความเข้าใจเพื่อไปต่อ (สุ่มคำถาม)</p>
+                            </div>
+                        </div>
+                        <button onclick="startMiniQuiz()" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] transform hover:-translate-y-1 text-lg flex justify-center items-center gap-2">
+                            📝 เริ่มทำแบบทดสอบ 
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- View 2: Full-Screen Exam View -->
+            <div id="exam-view" class="hidden flex-col h-full w-full absolute inset-0 bg-dark overflow-y-auto transition-opacity duration-300 z-20">
+                <div class="max-w-4xl mx-auto w-full p-6 lg:p-12 pb-24">
+                    <header class="text-center mb-12 border-b border-slate-800 pb-8">
+                        <span class="inline-block py-1 px-3 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-widest mb-4">Chapter Assessment</span>
+                        <h1 id="exam-title" class="text-3xl md:text-4xl font-bold text-white mb-4">Exam Title</h1>
+                        <p class="text-slate-400" id="exam-subtitle">สุ่มคำถาม 4 ข้อจากคลังข้อสอบ (ต้องได้ 80% ขึ้นไป)</p>
+                    </header>
+                    <div id="exam-questions" class="space-y-8 mb-12"></div>
+                    <div class="text-center pb-10">
+                        <button id="exam-submit-btn" onclick="submitExam()" class="px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold rounded-xl text-lg shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all transform hover:scale-105">
+                            ส่งคำตอบข้อสอบ
+                        </button>
+                        <div id="exam-result-area" class="hidden mt-8 p-6 rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+                            <div id="exam-result-text" class="text-2xl font-bold mb-4"></div>
+                            <div id="exam-actions"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- FULL SCREEN QUIZ MODAL -->
+    <div id="quiz-fullscreen-modal" class="hidden fixed inset-0 z-[100] bg-darker/90 backdrop-blur-lg flex-col items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <div id="quiz-modal-content" class="max-w-3xl w-full bg-slate-900 border border-slate-700 rounded-2xl p-6 md:p-10 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+            
+            <button onclick="cancelMiniQuiz()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-full p-2 transition-colors focus:outline-none" title="กลับไปอ่านเนื้อหา">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="flex items-center gap-4 mb-8 border-b border-slate-800 pb-6 pr-10">
+                <div class="p-3 bg-cyan-500/20 rounded-xl text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                    <svg class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white" id="quiz-title-type">Knowledge Check</h2>
+                    <p class="text-sm text-slate-400 mt-1">บทเรียนถูกซ่อนไว้เพื่อทดสอบความจำและความเข้าใจ</p>
+                </div>
+            </div>
+            
+            <p id="quiz-question" class="text-xl md:text-2xl text-slate-200 mb-8 font-medium leading-relaxed"></p>
+            <div id="quiz-answer-area" class="w-full space-y-3"></div>
+            <div id="quiz-feedback" class="hidden rounded-xl p-5 text-base font-medium transition-all duration-300 mt-8 border"></div>
+        </div>
+    </div>
 
     <script>
+        // --- UTILITY: Array Shuffler ---
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
         // --- COURSE DATABASE ---
-        // ประกอบด้วยเนื้อหาแบบ บทเรียน (Lesson) มีทั้งข้อสอบตัวเลือก (mcq) และ เติมคำ (written)
-        // และแบบ ข้อสอบท้ายบท (Exam)
         const courseData = [
             {
                 type: 'lesson',
@@ -151,19 +201,37 @@
                     <p><code>int main() { ... }</code> คือหัวใจของโปรแกรม คอมพิวเตอร์จะเริ่มอ่านคำสั่งจากที่นี่เสมอ</p>
                     <h2>2. Statements</h2>
                     <p>คำสั่ง <code>printf();</code> ใช้พิมพ์ข้อความ และจำไว้เสมอว่า <strong>ทุกคำสั่งต้องจบด้วย Semicolon (<code>;</code>) เสมอ</strong></p>
-                    <p class="text-cyan-400 mt-4 font-semibold text-sm">💡 ลองพิมพ์ข้อความของคุณเองในหน้าต่างด้านขวา แล้วกด Execute ดูสิ!</p>
+                    <p class="text-cyan-400 mt-4 font-semibold text-sm bg-cyan-500/10 p-3 rounded-lg border border-cyan-500/20">💡 ลองพิมพ์ข้อความของคุณเองในหน้าต่างด้านขวา แล้วกด Execute ดูสิ!</p>
                 `,
                 code: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
-                quiz: {
-                    type: 'mcq',
-                    question: "สัญลักษณ์ใดที่ใช้บอกจุดสิ้นสุดของคำสั่ง (Statement) ในภาษา C?",
-                    options: [
-                        { text: "Colon (:)", isCorrect: false },
-                        { text: "Semicolon (;)", isCorrect: true },
-                        { text: "Dot (.)", isCorrect: false }
-                    ],
-                    explanation: "ในภาษา C ทุกคำสั่งต้องจบด้วย Semicolon (;) เสมอ เพื่อให้คอมไพเลอร์รู้ว่าจบคำสั่งนั้นแล้ว"
-                },
+                quizzes: [
+                    {
+                        type: 'mcq',
+                        question: "สัญลักษณ์ใดที่ใช้บอกจุดสิ้นสุดของคำสั่ง (Statement) ในภาษา C?",
+                        options: [
+                            { text: "Colon (:)", isCorrect: false },
+                            { text: "Semicolon (;)", isCorrect: true },
+                            { text: "Dot (.)", isCorrect: false }
+                        ],
+                        explanation: "ในภาษา C ทุกคำสั่งต้องจบด้วย Semicolon (;) เสมอ เพื่อให้คอมไพเลอร์รู้ว่าจบคำสั่งนั้นแล้ว"
+                    },
+                    {
+                        type: 'mcq',
+                        question: "คำสั่งใดใช้สำหรับแสดงผลข้อความออกทางหน้าจอ?",
+                        options: [
+                            { text: "scanf()", isCorrect: false },
+                            { text: "printf()", isCorrect: true },
+                            { text: "print()", isCorrect: false }
+                        ],
+                        explanation: "printf() (Print Formatted) เป็นฟังก์ชันมาตรฐานสำหรับแสดงผลข้อความออกทางหน้าจอ"
+                    },
+                    {
+                        type: 'written',
+                        question: "พิมพ์ชื่อฟังก์ชันที่เป็น 'จุดเริ่มต้น' ของการทำงานในโปรแกรมภาษา C (เฉพาะชื่อฟังก์ชัน)",
+                        correctAnswer: "main",
+                        explanation: "ฟังก์ชัน main() คือจุดเริ่มต้นที่คอมพิวเตอร์จะเริ่มประมวลผลโค้ดของคุณเสมอ"
+                    }
+                ],
                 isCompleted: false
             },
             {
@@ -181,12 +249,34 @@
                     <p>ตัวอย่าง: <code>int age = 20;</code></p>
                 `,
                 code: `#include <stdio.h>\n\nint main() {\n    int age = 25;\n    float height = 175.5;\n    char grade = 'A';\n\n    printf("Age: %d\\n", age);\n    return 0;\n}`,
-                quiz: {
-                    type: 'written',
-                    question: "หากต้องการเก็บข้อมูล 'จำนวนเต็ม' ต้องใช้ Data Type ใด? (พิมพ์คำตอบเป็นตัวพิมพ์เล็ก)",
-                    correctAnswer: "int",
-                    explanation: "คำว่า int ย่อมาจาก integer ซึ่งใช้สำหรับเก็บค่าตัวเลขจำนวนเต็มที่ไม่มีทศนิยม"
-                },
+                quizzes: [
+                    {
+                        type: 'written',
+                        question: "หากต้องการเก็บข้อมูล 'จำนวนเต็ม' ต้องใช้ Data Type ใด? (พิมพ์ด้วยตัวพิมพ์เล็ก)",
+                        correctAnswer: "int",
+                        explanation: "คำว่า int ย่อมาจาก integer ซึ่งใช้สำหรับเก็บค่าตัวเลขจำนวนเต็ม"
+                    },
+                    {
+                        type: 'mcq',
+                        question: "ตัวแปรประเภท float เหมาะกับการเก็บข้อมูลชนิดใด?",
+                        options: [
+                            { text: "ตัวอักษร 1 ตัว", isCorrect: false },
+                            { text: "ตัวเลขทศนิยม", isCorrect: true },
+                            { text: "ข้อความยาวๆ", isCorrect: false }
+                        ],
+                        explanation: "float ถูกสร้างมาเพื่อเก็บค่าตัวเลขที่มีจุดทศนิยมโดยเฉพาะ"
+                    },
+                    {
+                        type: 'mcq',
+                        question: "ข้อใดประกาศตัวแปรเพื่อเก็บเกรด 'A' ได้ถูกต้องที่สุด?",
+                        options: [
+                            { text: "char grade = 'A';", isCorrect: true },
+                            { text: "int grade = 'A';", isCorrect: false },
+                            { text: "float grade = A;", isCorrect: false }
+                        ],
+                        explanation: "char ใช้เก็บตัวอักษร 1 ตัว และค่าต้องอยู่ในเครื่องหมาย Single Quote (' ')"
+                    }
+                ],
                 isCompleted: false
             },
             {
@@ -208,6 +298,41 @@
                         type: 'written',
                         question: "เติมโค้ดที่หายไปเพื่อให้โปรแกรมแสดงผลข้อความ: \n____(\"Hello\");",
                         correctAnswer: "printf"
+                    },
+                    {
+                        type: 'mcq',
+                        question: "ข้อใดต่อไปนี้คือ Data Type สำหรับเก็บค่าทศนิยม?",
+                        options: [
+                            { text: "int", isCorrect: false },
+                            { text: "float", isCorrect: true },
+                            { text: "char", isCorrect: false },
+                            { text: "string", isCorrect: false }
+                        ]
+                    },
+                    {
+                        type: 'mcq',
+                        question: "คำสั่งใดใช้ประกาศตัวแปรเพื่อเก็บอายุ (จำนวนเต็ม) ที่ชื่อว่า myAge ได้ถูกต้อง?",
+                        options: [
+                            { text: "int myAge;", isCorrect: true },
+                            { text: "float myAge;", isCorrect: false },
+                            { text: "char myAge;", isCorrect: false },
+                            { text: "integer myAge;", isCorrect: false }
+                        ]
+                    },
+                    {
+                        type: 'written',
+                        question: "สัญลักษณ์ใดที่ใช้บอกคอมไพเลอร์ว่า จบคำสั่งในบรรทัดนั้นแล้ว (พิมพ์แค่ 1 ตัวอักษร)",
+                        correctAnswer: ";"
+                    },
+                    {
+                        type: 'mcq',
+                        question: "ข้อใดคือวิธีการเขียน Library ที่ถูกต้องเพื่อใช้ฟังก์ชัน printf?",
+                        options: [
+                            { text: "#include <stdio.h>", isCorrect: true },
+                            { text: "import stdio", isCorrect: false },
+                            { text: "include (stdio.h)", isCorrect: false },
+                            { text: "using namespace std;", isCorrect: false }
+                        ]
                     }
                 ],
                 isCompleted: false
@@ -223,63 +348,107 @@
                     <p>ตัวอย่างการรับค่าจำนวนเต็ม: <code>scanf("%d", &age);</code></p>
                 `,
                 code: `#include <stdio.h>\n\nint main() {\n    int age;\n    printf("Enter your age: ");\n    scanf("%d", &age);\n    printf("You are %d years old.\\n", age);\n    return 0;\n}`,
-                quiz: {
-                    type: 'mcq',
-                    question: "เครื่องหมายใดที่จำเป็นต้องใส่หน้าชื่อตัวแปรในฟังก์ชัน scanf?",
-                    options: [
-                        { text: "* (Asterisk)", isCorrect: false },
-                        { text: "& (Ampersand)", isCorrect: true },
-                        { text: "% (Percent)", isCorrect: false }
-                    ],
-                    explanation: "เครื่องหมาย & (Address-of operator) ใช้เพื่อบอกตำแหน่ง (Memory Address) ของตัวแปรให้ scanf นำค่าไปเก็บถูกที่"
-                },
+                quizzes: [
+                    {
+                        type: 'mcq',
+                        question: "เครื่องหมายใดที่จำเป็นต้องใส่หน้าชื่อตัวแปรในฟังก์ชัน scanf?",
+                        options: [
+                            { text: "* (Asterisk)", isCorrect: false },
+                            { text: "& (Ampersand)", isCorrect: true },
+                            { text: "% (Percent)", isCorrect: false }
+                        ],
+                        explanation: "เครื่องหมาย & (Address-of operator) ใช้เพื่อบอกตำแหน่ง (Memory Address) ของตัวแปรให้ scanf นำค่าไปเก็บถูกที่"
+                    },
+                    {
+                        type: 'mcq',
+                        question: "Format Specifier ใดที่ใช้รับค่าหรือแสดงผลตัวเลขจำนวนเต็ม (int)?",
+                        options: [
+                            { text: "%f", isCorrect: false },
+                            { text: "%c", isCorrect: false },
+                            { text: "%d", isCorrect: true }
+                        ],
+                        explanation: "%d ย่อมาจาก decimal integer ใช้คู่กับตัวแปรประเภท int"
+                    },
+                    {
+                        type: 'written',
+                        question: "พิมพ์ฟังก์ชันที่ใช้สำหรับ 'รับค่า' จากคีย์บอร์ด (เฉพาะชื่อฟังก์ชัน)",
+                        correctAnswer: "scanf",
+                        explanation: "scanf ย่อมาจาก Scan Formatted เป็นฟังก์ชันมาตรฐานสำหรับรับค่าจากคีย์บอร์ด"
+                    }
+                ],
                 isCompleted: false
             }
         ];
 
         let currentLessonIndex = 0;
         let examAnswers = {};
+        let currentExamQuestions = []; 
+        let isExamActive = false; // 🔥 ตัวแปรสำหรับล็อคการนำทางระหว่างทำข้อสอบ
 
-        // --- DOM ELEMENTS ---
         const views = {
             lesson: document.getElementById('lesson-view'),
             exam: document.getElementById('exam-view')
         };
         const navContainer = document.getElementById('sidebar-nav');
+        const mobileMenu = document.getElementById('sidebar');
+        const mobileOverlay = document.getElementById('mobile-overlay');
         
-        // --- INITIALIZATION ---
         function init() {
             renderNav();
+            updateProgress();
             loadContent(0);
         }
 
-        // --- SIDEBAR NAVIGATION LOGIC ---
+        function toggleMobileMenu() {
+            const isClosed = mobileMenu.classList.contains('-translate-x-full');
+            if (isClosed) {
+                mobileMenu.classList.remove('-translate-x-full');
+                mobileOverlay.classList.remove('hidden');
+                setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
+            } else {
+                mobileMenu.classList.add('-translate-x-full');
+                mobileOverlay.classList.add('opacity-0');
+                setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+            }
+        }
+
+        function updateProgress() {
+            const completedCount = courseData.filter(item => item.isCompleted).length;
+            const percentage = Math.round((completedCount / courseData.length) * 100);
+            document.getElementById('progress-text').innerText = `${percentage}%`;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+        }
+
         function renderNav() {
             navContainer.innerHTML = '';
             courseData.forEach((item, index) => {
                 const btn = document.createElement('button');
                 const isExam = item.type === 'exam';
                 
-                // CORE LOGIC: ปลดล็อกเมื่อบทก่อนหน้าเรียนจบแล้ว หรือเป็นบทแรก
                 const isUnlocked = index === 0 || courseData[index - 1].isCompleted;
                 const isCompleted = item.isCompleted;
+                
+                // เช็คว่ากำลังอยู่ในโหมดทำข้อสอบ และไม่ได้กำลังอยู่ที่ปุ่มข้อสอบตัวเองหรือไม่
+                const isDisabledByExam = isExamActive && index !== currentLessonIndex;
 
-                // Styling
                 let baseStyle = "w-full text-left px-4 py-3 rounded-lg mb-2 transition-all duration-200 border relative group ";
                 
-                if (!isUnlocked) {
-                    baseStyle += "bg-slate-900/40 text-slate-600 border-transparent cursor-not-allowed";
+                if (!isUnlocked || isDisabledByExam) {
+                    // หากโดนล็อคจากข้อสอบ ให้ลด Opacity ลงเพื่อแสดงว่ากดไม่ได้
+                    baseStyle += "bg-slate-900/40 text-slate-600 border-transparent cursor-not-allowed opacity-50";
                 } else if (index === currentLessonIndex) {
-                    baseStyle += isExam ? "bg-cyan-900/30 text-cyan-300 border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.2)]" : "bg-slate-800 text-cyan-400 border-slate-600 shadow-md";
+                    baseStyle += isExam 
+                        ? "bg-purple-900/30 text-purple-300 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.15)]" 
+                        : "bg-slate-800 text-cyan-400 border-slate-600 shadow-md";
                 } else {
-                    baseStyle += isExam ? "border-transparent text-purple-400 hover:bg-slate-800 hover:border-purple-500/50" : "border-transparent text-slate-400 hover:bg-slate-800/50 hover:text-slate-200";
+                    baseStyle += isExam 
+                        ? "border-transparent text-purple-400 hover:bg-slate-800 hover:border-purple-500/30" 
+                        : "border-transparent text-slate-400 hover:bg-slate-800/50 hover:text-slate-200";
                 }
 
                 btn.className = baseStyle;
-                // Add id for targetting animation (Auto-Unlock pulse)
                 btn.id = `nav-btn-${index}`;
                 
-                // Status Icons
                 let statusIcon = '';
                 if (isCompleted) {
                     statusIcon = '<svg class="w-4 h-4 text-green-500 absolute right-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
@@ -289,45 +458,51 @@
 
                 btn.innerHTML = `
                     <div class="flex items-center gap-2 pr-6">
-                        ${isExam ? '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>' : ''}
+                        ${isExam ? '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>' : ''}
                         <div class="text-[10px] font-bold opacity-75 uppercase tracking-wider">${item.chapter}</div>
                     </div>
                     <div class="font-medium truncate mt-1 ${isExam ? 'text-sm' : ''} pr-6">${item.title}</div>
                     ${statusIcon}
                 `;
                 
-                if (isUnlocked) {
-                    btn.onclick = () => loadContent(index);
+                if (isUnlocked && !isDisabledByExam) {
+                    btn.onclick = () => {
+                        if(window.innerWidth < 768) toggleMobileMenu();
+                        loadContent(index);
+                    };
                 } else {
-                    btn.title = "กรุณาเรียนบทก่อนหน้าให้จบเพื่อปลดล็อก";
+                    // หากโดนล็อคจากข้อสอบ ให้ขึ้นแจ้งเตือนเมื่อพยายามคลิกเปลี่ยนหน้า
+                    btn.onclick = () => {
+                        if (isDisabledByExam) {
+                            alert("⚠️ กำลังทำข้อสอบอยู่ กรุณาส่งคำตอบให้เรียบร้อยก่อนเปลี่ยนไปหน้าอื่น");
+                        }
+                    };
+                    btn.title = isDisabledByExam ? "กำลังทำข้อสอบอยู่" : "กรุณาเรียนบทก่อนหน้าให้จบเพื่อปลดล็อก";
                 }
                 
                 navContainer.appendChild(btn);
             });
         }
 
-        // --- ROUTER & CONTENT LOADER ---
         function loadContent(index) {
+            isExamActive = false; // ปลดล็อคเผื่อไว้เสมอเมื่อเปลี่ยนหน้าสำเร็จ
             currentLessonIndex = index;
             const data = courseData[index];
             renderNav();
+            cancelMiniQuiz();
 
             if (data.type === 'lesson') {
-                document.getElementById('sidebar').classList.add('md:flex');
                 views.exam.classList.add('hidden');
                 views.lesson.classList.remove('hidden');
                 
                 document.getElementById('lesson-chapter').innerText = data.chapter;
                 document.getElementById('lesson-title').innerText = data.title;
                 document.getElementById('lesson-content').innerHTML = data.content;
-                
-                // Embed Real C Compiler using OneCompiler Iframe
                 document.getElementById('compiler-iframe').src = `https://onecompiler.com/embed/c?theme=dark&hideLanguageSelection=true&code=${encodeURIComponent(data.code)}`;
                 
-                unlockLesson(); // Reset Blur overlay
-                renderMiniQuiz(data.quiz);
+                const randomQuiz = data.quizzes[Math.floor(Math.random() * data.quizzes.length)];
+                renderMiniQuiz(randomQuiz);
             } else if (data.type === 'exam') {
-                document.getElementById('sidebar').classList.remove('md:flex'); // Hide sidebar for exam focus
                 views.lesson.classList.add('hidden');
                 views.exam.classList.remove('hidden');
                 views.exam.classList.add('flex');
@@ -335,41 +510,61 @@
             }
         }
 
-        // --- LESSON LOCK (BLUR) LOGIC ---
         function startMiniQuiz() {
-            document.getElementById('quiz-start-container').classList.add('hidden');
-            document.getElementById('quiz-active-container').classList.remove('hidden');
+            const modal = document.getElementById('quiz-fullscreen-modal');
+            const modalContent = document.getElementById('quiz-modal-content');
             
-            const overlay = document.getElementById('lesson-lock-overlay');
-            overlay.classList.remove('hidden');
-            document.getElementById('lesson-content').classList.add('blur-sm', 'select-none');
-            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            document.getElementById('lesson-content-container').classList.add('blur-md', 'select-none', 'brightness-50');
+            document.getElementById('compiler-container').classList.add('blur-md', 'pointer-events-none', 'brightness-50');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
         }
 
-        function unlockLesson() {
-            const overlay = document.getElementById('lesson-lock-overlay');
-            overlay.classList.add('opacity-0');
-            document.getElementById('lesson-content').classList.remove('blur-sm', 'select-none');
-            setTimeout(() => overlay.classList.add('hidden'), 300);
+        function cancelMiniQuiz() {
+            const modal = document.getElementById('quiz-fullscreen-modal');
+            const modalContent = document.getElementById('quiz-modal-content');
             
-            document.getElementById('quiz-start-container').classList.remove('hidden');
-            document.getElementById('quiz-active-container').classList.add('hidden');
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+            
+            document.getElementById('lesson-content-container').classList.remove('blur-md', 'select-none', 'brightness-50');
+            document.getElementById('compiler-container').classList.remove('blur-md', 'pointer-events-none', 'brightness-50');
         }
 
-        // --- MINI QUIZ LOGIC ---
+        function closeAndLoadNext(index) {
+            cancelMiniQuiz();
+            setTimeout(() => loadContent(index), 300);
+        }
+
         function renderMiniQuiz(quiz) {
             document.getElementById('quiz-question').innerText = quiz.question;
             const q_answerArea = document.getElementById('quiz-answer-area');
             const q_feedback = document.getElementById('quiz-feedback');
             
             q_answerArea.innerHTML = '';
-            q_feedback.className = 'hidden rounded-lg p-3 text-sm font-medium mt-4';
+            q_feedback.className = 'hidden rounded-xl p-5 text-base font-medium mt-6 border';
             
             if (quiz.type === 'mcq') {
                 document.getElementById('quiz-title-type').innerText = "Quiz: Multiple Choice";
-                quiz.options.forEach((opt) => {
+                
+                const shuffledOptions = shuffleArray(quiz.options);
+                
+                shuffledOptions.forEach((opt) => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left px-4 py-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 hover:border-slate-500 mb-2 transition-all font-code text-sm text-slate-200";
+                    btn.className = "w-full text-left px-6 py-4 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 hover:border-slate-500 mb-3 transition-all font-code text-base text-slate-200 focus:outline-none";
                     btn.innerText = opt.text;
                     btn.onclick = () => handleQuizSubmit(opt.isCorrect, quiz, btn, q_answerArea);
                     q_answerArea.appendChild(btn);
@@ -378,49 +573,55 @@
                 document.getElementById('quiz-title-type').innerText = "Quiz: Code Fill-in";
                 q_answerArea.innerHTML = `
                     <div class="relative group mt-2">
-                        <div class="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg blur opacity-20 group-focus-within:opacity-50 transition duration-300"></div>
-                        <input type="text" id="written-input" placeholder="พิมพ์โค้ดที่ถูกต้อง..." autocomplete="off" class="relative w-full bg-slate-950 text-cyan-300 border border-slate-700 rounded-lg px-4 py-3 font-code text-sm focus:outline-none focus:border-cyan-500">
+                        <div class="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl blur opacity-20 group-focus-within:opacity-50 transition duration-300"></div>
+                        <input type="text" id="written-input" placeholder="พิมพ์คำตอบที่ถูกต้อง..." autocomplete="off" class="relative w-full bg-slate-950 text-cyan-300 border border-slate-700 rounded-xl px-6 py-5 font-code text-lg focus:outline-none focus:border-cyan-500">
                     </div>
-                    <button id="written-submit" class="mt-3 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg transition-colors text-sm">ส่งคำตอบ</button>
+                    <button id="written-submit" class="mt-6 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl transition-colors text-lg shadow-md">ส่งคำตอบ</button>
                 `;
                 
-                document.getElementById('written-submit').onclick = (e) => {
+                document.getElementById('written-submit').onclick = () => {
                     const input = document.getElementById('written-input');
                     const isCorrect = input.value.trim() === quiz.correctAnswer;
-                    handleQuizSubmit(isCorrect, quiz, e.target, q_answerArea);
-                    input.disabled = true;
+                    handleQuizSubmit(isCorrect, quiz, input, q_answerArea);
                 };
             }
         }
 
         function handleQuizSubmit(isCorrect, quiz, clickedElement, container) {
-            // Disable inputs
-            container.querySelectorAll('button, input').forEach(el => el.disabled = true);
-            
-            if(isCorrect) {
-                // อัปเดตสถานะว่าบทนี้เรียนจบแล้ว (ปลดล็อกบทต่อไป)
-                courseData[currentLessonIndex].isCompleted = true;
-                renderNav(); // วาดเมนูใหม่เพื่อให้แม่กุญแจหายไป
+            container.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500', 'bg-red-500/10', 'text-red-400', 'animate-shake'));
 
-                // สร้าง Animation เพื่อเรียกความสนใจที่เมนูใหม่ที่ถูกปลดล็อก
+            if (isCorrect) {
+                container.querySelectorAll('button, input').forEach(el => el.disabled = true);
+                
+                if (!courseData[currentLessonIndex].isCompleted) {
+                    courseData[currentLessonIndex].isCompleted = true;
+                    updateProgress();
+                    renderNav(); 
+                }
+
                 if (currentLessonIndex + 1 < courseData.length) {
                     setTimeout(() => {
                         const nextNavBtn = document.getElementById(`nav-btn-${currentLessonIndex + 1}`);
                         if (nextNavBtn) {
-                            nextNavBtn.classList.add('bg-green-500/20', 'border-green-500', 'animate-pulse');
-                            setTimeout(() => {
-                                nextNavBtn.classList.remove('bg-green-500/20', 'border-green-500', 'animate-pulse');
-                            }, 2000);
+                            nextNavBtn.classList.add('bg-green-500/20', 'border-green-500');
+                            setTimeout(() => nextNavBtn.classList.remove('bg-green-500/20', 'border-green-500'), 2000);
                         }
                     }, 300);
                 }
-            }
 
-            if (quiz.type === 'mcq') {
-                clickedElement.classList.add(isCorrect ? 'border-green-500' : 'border-red-500', isCorrect ? 'bg-green-500/20' : 'bg-red-500/20', isCorrect ? 'text-green-400' : 'text-red-400');
+                if (quiz.type === 'mcq') {
+                    clickedElement.classList.add('border-green-500', 'bg-green-500/20', 'text-green-400');
+                } else {
+                    clickedElement.classList.add('border-green-500', 'text-green-400');
+                }
             } else {
-                const input = document.getElementById('written-input');
-                input.classList.add(isCorrect ? 'border-green-500' : 'border-red-500', isCorrect ? 'text-green-400' : 'text-red-400');
+                if (quiz.type === 'mcq') {
+                    clickedElement.classList.add('border-red-500', 'bg-red-500/10', 'text-red-400', 'animate-shake');
+                    setTimeout(() => clickedElement.classList.remove('animate-shake'), 400); 
+                } else {
+                    clickedElement.classList.add('border-red-500', 'text-red-400', 'animate-shake');
+                    setTimeout(() => clickedElement.classList.remove('animate-shake'), 400);
+                }
             }
 
             showFeedback(isCorrect, quiz.explanation);
@@ -428,98 +629,115 @@
 
         function showFeedback(isCorrect, explanation) {
             const fb = document.getElementById('quiz-feedback');
-            fb.classList.remove('hidden', 'bg-green-500/10', 'bg-red-500/10');
+            fb.classList.remove('hidden', 'bg-green-500/10', 'bg-red-500/10', 'border-green-500/20', 'border-red-500/20', 'text-green-400', 'text-red-400');
             
             if (isCorrect) {
                 fb.classList.add('bg-green-500/10', 'text-green-400', 'border', 'border-green-500/20');
                 let nextBtnHtml = '';
                 
-                // หากยังไม่ถึงบทสุดท้าย ให้แสดงปุ่มปลดล็อกไปหน้าต่อไป
                 if (currentLessonIndex < courseData.length - 1) {
                     nextBtnHtml = `
-                    <button onclick="loadContent(${currentLessonIndex + 1})" class="mt-4 w-full py-2 bg-green-600 hover:bg-green-500 text-white rounded font-bold transition-all flex items-center justify-center gap-2">
-                        เรียนบทถัดไป (ปลดล็อกแล้ว 🔓) <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <button onclick="closeAndLoadNext(${currentLessonIndex + 1})" class="mt-6 w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(22,163,74,0.3)] text-lg">
+                        เรียนบทถัดไป (ปลดล็อกแล้ว 🔓) <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>`;
                 }
                 
-                fb.innerHTML = `<strong class="text-base flex items-center gap-2">✅ ยอดเยี่ยมมาก! คำตอบถูกต้อง</strong><span class="text-slate-300 mt-1 block">${explanation}</span>${nextBtnHtml}`;
+                fb.innerHTML = `<strong class="text-lg flex items-center gap-2">✅ ยอดเยี่ยมมาก! คำตอบถูกต้อง</strong><span class="text-slate-300 mt-2 block">${explanation}</span>${nextBtnHtml}`;
             } else {
                 fb.classList.add('bg-red-500/10', 'text-red-400', 'border', 'border-red-500/20');
-                fb.innerHTML = `<strong class="text-base flex items-center gap-2">❌ ยังไม่ถูกต้องนัก ลองใหม่อีกครั้ง</strong><span class="text-slate-300 mt-1 block">${explanation}</span>`;
+                fb.innerHTML = `<strong class="text-lg flex items-center gap-2">❌ ยังไม่ถูกต้องนัก ลองใหม่อีกครั้ง</strong><span class="text-slate-300 mt-2 block">พิจารณาเงื่อนไขหรือไวยากรณ์อีกครั้ง</span>`;
             }
         }
 
         // --- EXAM LOGIC ---
         function renderExam(data) {
+            isExamActive = true; // 🔥 เริ่มล็อคการนำทางใน Sidebar ทันที
+            renderNav();         // รีเฟรช Sidebar เพื่อแสดงสถานะโดนล็อค
+
             document.getElementById('exam-title').innerText = data.title;
             const qContainer = document.getElementById('exam-questions');
             qContainer.innerHTML = '';
             examAnswers = {}; 
-            document.getElementById('exam-result-text').classList.add('hidden');
+            
+            document.getElementById('exam-result-area').classList.add('hidden');
             document.getElementById('exam-submit-btn').disabled = false;
+            document.getElementById('exam-submit-btn').classList.remove('hidden');
 
-            data.questions.forEach((q, index) => {
+            currentExamQuestions = shuffleArray(data.questions).slice(0, 4);
+
+            currentExamQuestions.forEach((q, index) => {
                 const qBlock = document.createElement('div');
-                qBlock.className = "bg-slate-900 border border-slate-800 rounded-xl p-6 relative overflow-hidden";
+                qBlock.className = "bg-slate-900 border border-slate-800 rounded-xl p-6 md:p-8 relative overflow-hidden shadow-lg";
                 
                 let inputArea = '';
                 if (q.type === 'mcq') {
                     let optionsHTML = '';
-                    q.options.forEach((opt, optIndex) => {
+                    let shuffledOptions = shuffleArray(q.options);
+
+                    shuffledOptions.forEach((opt, optIndex) => {
                         optionsHTML += `
-                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer transition-colors">
-                                <input type="radio" name="exam-q-${index}" value="${optIndex}" onchange="examAnswers[${index}] = ${opt.isCorrect}" class="w-4 h-4 text-cyan-500 bg-slate-900 border-slate-600">
+                            <label class="flex items-center gap-3 p-4 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 hover:border-purple-500/50 cursor-pointer transition-all">
+                                <input type="radio" name="exam-q-${index}" value="${optIndex}" onchange="examAnswers[${index}] = ${opt.isCorrect}" class="w-5 h-5 text-purple-500 bg-slate-900 border-slate-600 focus:ring-purple-500 focus:ring-offset-slate-800">
                                 <span class="font-code text-slate-200">${opt.text}</span>
                             </label>
                         `;
                     });
-                    inputArea = `<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">${optionsHTML}</div>`;
+                    inputArea = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">${optionsHTML}</div>`;
                 } else if (q.type === 'written') {
                     inputArea = `
-                        <div class="mt-4">
-                            <input type="text" onchange="examAnswers[${index}] = (this.value.trim() === '${q.correctAnswer}')" placeholder="พิมพ์คำตอบของคุณที่นี่..." class="w-full bg-slate-950 text-slate-200 border border-slate-700 rounded-lg p-3 font-code focus:outline-none focus:border-cyan-500">
+                        <div class="mt-6">
+                            <input type="text" onchange="examAnswers[${index}] = (this.value.trim() === '${q.correctAnswer}')" placeholder="พิมพ์คำตอบของคุณที่นี่..." class="w-full bg-slate-950 text-slate-200 border border-slate-700 rounded-lg p-4 font-code focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors">
                         </div>
                     `;
                 }
 
-                qBlock.innerHTML = `<div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div><h3 class="text-lg font-bold text-white mb-2">ข้อที่ ${index + 1}</h3><p class="text-slate-300 font-medium">${q.question}</p>${inputArea}`;
+                qBlock.innerHTML = `<div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-cyan-500"></div><h3 class="text-xl font-bold text-white mb-3">ข้อที่ ${index + 1}</h3><p class="text-slate-300 font-medium text-lg leading-relaxed">${q.question}</p>${inputArea}`;
                 qContainer.appendChild(qBlock);
             });
         }
 
         function submitExam() {
-            const data = courseData[currentLessonIndex];
             let score = 0;
-            for (let i = 0; i < data.questions.length; i++) {
+            for (let i = 0; i < currentExamQuestions.length; i++) {
                 if (examAnswers[i] === true) score++;
             }
 
-            const resultText = document.getElementById('exam-result-text');
-            resultText.classList.remove('hidden');
+            isExamActive = false; // 🔥 เมื่อสอบเสร็จ ให้ปลดล็อคการนำทางใน Sidebar ทันที
             
-            const percentage = (score / data.questions.length) * 100;
+            const resultArea = document.getElementById('exam-result-area');
+            const resultText = document.getElementById('exam-result-text');
+            const resultActions = document.getElementById('exam-actions');
+            
+            resultArea.classList.remove('hidden');
+            document.getElementById('exam-submit-btn').classList.add('hidden');
+            
+            const percentage = (score / currentExamQuestions.length) * 100;
             if (percentage >= 80) {
-                // สอบผ่าน! ปลดล็อกบทต่อไป
-                courseData[currentLessonIndex].isCompleted = true;
-                renderNav();
+                if (!courseData[currentLessonIndex].isCompleted) {
+                    courseData[currentLessonIndex].isCompleted = true;
+                    updateProgress();
+                }
 
-                resultText.className = "text-xl font-bold text-green-400 mt-6";
-                let nextAction = currentLessonIndex < courseData.length - 1 
-                    ? `<br><button onclick="loadContent(${currentLessonIndex + 1})" class="mt-6 px-8 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] inline-flex items-center gap-2">เรียนบทถัดไป (ปลดล็อกแล้ว) 🚀</button>`
-                    : `<br><span class="mt-6 inline-block px-8 py-3 bg-green-600 text-white rounded-lg font-bold shadow-[0_0_15px_rgba(34,197,94,0.3)]">🎉 ยินดีด้วย! คุณเรียนจบทุกบทแล้ว</span>`;
+                resultText.className = "text-3xl font-bold text-green-400 mb-4";
+                resultText.innerHTML = `🎉 สอบผ่าน! ได้คะแนน ${score}/${currentExamQuestions.length}`;
                 
-                resultText.innerHTML = `🎉 สอบผ่าน! ได้คะแนน ${score}/${data.questions.length}${nextAction}`;
+                if(currentLessonIndex < courseData.length - 1) {
+                    resultActions.innerHTML = `<button onclick="loadContent(${currentLessonIndex + 1})" class="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] transform hover:scale-105 inline-flex items-center gap-2">เรียนบทถัดไป (ปลดล็อกแล้ว) 🚀</button>`;
+                } else {
+                    resultActions.innerHTML = `<span class="inline-block px-8 py-4 bg-green-600 text-white rounded-xl font-bold shadow-lg">🎉 ยินดีด้วย! คุณเรียนจบทุกบทแล้ว</span>`;
+                }
+                
+                document.querySelectorAll('#exam-questions input').forEach(input => input.disabled = true);
             } else {
-                resultText.className = "text-xl font-bold text-yellow-400 mt-6";
-                resultText.innerHTML = `คะแนนของคุณ: ${score}/${data.questions.length} (ต้องได้ 80% ขึ้นไป) ลองทบทวนเนื้อหาแล้วทำใหม่อีกครั้งนะครับ ✌️`;
+                resultText.className = "text-2xl font-bold text-yellow-400 mb-4";
+                resultText.innerHTML = `คะแนนของคุณ: ${score}/${currentExamQuestions.length} <br><span class="text-base text-slate-400 font-normal mt-2 block">(ต้องได้ 80% ขึ้นไป) ลองทบทวนเนื้อหาแล้วทำใหม่อีกครั้งนะครับ ✌️</span>`;
+                
+                resultActions.innerHTML = `<button onclick="renderExam(courseData[${currentLessonIndex}])" class="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all inline-flex items-center gap-2">🔄 สุ่มข้อสอบและสอบใหม่อีกครั้ง</button>`;
             }
 
-            // Lock all inputs
-            document.querySelectorAll('#exam-questions input').forEach(input => input.disabled = true);
-            document.getElementById('exam-submit-btn').disabled = true;
+            renderNav(); // รีเฟรชเมนูครั้งสุดท้ายเพื่อให้แม่กุญแจหาย/และปลดล็อคการคลิด
         }
 
-        // Run application
         window.onload = init;
     </script>
 </body>
